@@ -1,6 +1,9 @@
 import importlib
 from loguru import logger
 from .actions.example import example
+from .actions.chat_completion import chat_completion
+from .actions.file_analysis import file_analysis
+from .actions.web_search import web_search
 from .services.credentials import CredentialsRegistry
 
 class TemplateRoomsAddon:
@@ -16,9 +19,14 @@ class TemplateRoomsAddon:
         self.config = {}
         self.credentials = CredentialsRegistry()
 
-    # add your actions here  
-    def example(self, param1: str, param2: str) -> dict:
-        return example(self.config, param1=param1, param2=param2)
+    def chat_completion(self, message: str, **kwargs) -> dict:
+        return chat_completion(self.config, message=message, **kwargs)
+    
+    def file_analysis(self, message: str, **kwargs) -> dict:
+        return file_analysis(self.config, message=message, **kwargs)
+    
+    def web_search(self, query: str, **kwargs) -> dict:
+        return web_search(self.config, query=query, **kwargs)
 
     def test(self) -> bool:
         """

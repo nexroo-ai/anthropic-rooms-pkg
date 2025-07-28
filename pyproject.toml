@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "template-rooms-pkg"
+name = "anthropic-rooms-pkg"
 version = "1.0.0"
-description = "Template rooms package for AI rooms script"
+description = "Anthropic rooms package for AI rooms script"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
@@ -23,6 +23,7 @@ classifiers = [
 requires-python = ">=3.9"
 dependencies = [
     "loguru>=0.7.0",
+    "anthropic (>=0.59.0,<0.60.0)",
 ]
 
 [tool.setuptools.packages.find]
@@ -43,5 +44,5 @@ ruff = "^0.12.3"
 pre-commit = "^4.2.0"
 
 [project.urls]
-Homepage = "https://github.com/synvex/template-rooms-pkg"
-Repository = "https://github.com/synvex/template-rooms-pkg"
+Homepage = "https://github.com/synvex/anthropic-rooms-pkg"
+Repository = "https://github.com/synvex/anthropic-rooms-pkg"
