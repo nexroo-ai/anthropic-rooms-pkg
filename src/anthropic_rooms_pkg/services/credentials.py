@@ -20,7 +20,6 @@ class CredentialsRegistry:
             self.store(key, value)
     
     def get(self, key: str) -> Optional[str]:
-        logger.debug(f"All credentials: {self._credentials}")
         logger.debug(f"Retrieving credential: {key}")
         return self._credentials.get(key)
     

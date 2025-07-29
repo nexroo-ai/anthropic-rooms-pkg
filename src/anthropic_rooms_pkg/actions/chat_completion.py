@@ -39,9 +39,10 @@ def chat_completion(
     logger.debug(f"Executing chat_completion with message: {message[:100]}...")
     
     try:
-        credentials = CredentialsRegistry()
-        api_key = credentials.get("anthropic_api_key")
-        
+        # credentials = CredentialsRegistry()
+        # api_key = credentials.get("anthropic_api_key")
+        logger.debug(f'SECRETS: {config.secrets}')
+        api_key = config.secrets.anthropic_api_key
         if not api_key:
             raise ValueError("Anthropic API key not found in credentials")
         
