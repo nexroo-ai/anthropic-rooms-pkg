@@ -41,7 +41,7 @@ def chat_completion(
         # credentials = CredentialsRegistry()
         # api_key = credentials.get("anthropic_api_key")
         logger.debug(f'SECRETS: {config.secrets}')
-        api_key = config.secrets.anthropic_api_key
+        api_key = config.secrets['anthropic_api_key']
         if not api_key:
             raise ValueError("Anthropic API key not found in credentials")
         
