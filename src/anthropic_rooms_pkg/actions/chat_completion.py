@@ -5,7 +5,6 @@ import anthropic
 
 from .base import ActionResponse, OutputBase, TokensSchema
 from anthropic_rooms_pkg.configuration import CustomAddonConfig
-from anthropic_rooms_pkg.services.credentials import CredentialsRegistry
 
 
 class ChatMessage(BaseModel):
