@@ -1,6 +1,5 @@
 import importlib
 from loguru import logger
-from .actions.example import example
 from .actions.chat_completion import chat_completion
 from .actions.file_analysis import file_analysis
 from .actions.web_search import web_search
@@ -99,7 +98,7 @@ class TemplateRoomsAddon:
             bool: True if configuration is loaded successfully, False otherwise
         """
         try:
-            from template_rooms_pkg.configuration import CustomAddonConfig
+            from anthropic_rooms_pkg.configuration import CustomAddonConfig
             self.config = CustomAddonConfig(**addon_config)
             logger.info(f"Addon configuration loaded successfully: {self.config}")
             return True

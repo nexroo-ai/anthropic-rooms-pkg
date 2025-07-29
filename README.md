@@ -45,6 +45,7 @@ To create a new addon package using this template:
 4. **Create configuration schema:**
    - Define your addon's configuration schema in `configuration/` directory
    - Inherit from `BaseAddonConfig` for validation
+   - Add your configuration and required secrets
 5. **Update documentation:**
    - Modify this README.md with your addon's specific information
    - Update the CHANGELOG.md
