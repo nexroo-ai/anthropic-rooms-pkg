@@ -6,8 +6,8 @@ import os
 from pathlib import Path
 
 from .base import ActionResponse, OutputBase, TokensSchema
-from template_rooms_pkg.configuration import CustomAddonConfig
-from template_rooms_pkg.services.credentials import CredentialsRegistry
+from anthropic_rooms_pkg.configuration import CustomAddonConfig
+from anthropic_rooms_pkg.services.credentials import CredentialsRegistry
 
 
 class FileUpload(BaseModel):
