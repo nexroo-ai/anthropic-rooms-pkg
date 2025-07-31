@@ -27,13 +27,17 @@ class ActionOutput(OutputBase):
     stop_reason: Optional[str] = Field(None, description="Why Claude stopped generating")
 
 
+### ADD TOOL REGISTERY FIRST BEFORE CHAT COMPLETION ##
+
+
 def chat_completion(
     config: CustomAddonConfig,
     message: str,
     messages: Optional[List[ChatMessage]] = None,
     max_tokens: Optional[int] = None,
     temperature: Optional[float] = None,
-    system: Optional[str] = None
+    system: Optional[str] = None,
+    tools: Optional[Dict] = None
 ) -> ActionResponse:
     logger.debug(f"Executing chat_completion with message: {message[:100]}...")
     
@@ -76,6 +80,16 @@ def chat_completion(
         
         if system:
             api_params["system"] = system
+        
+        if tools:
+            formatted_tools = []
+            for action, tool_data in tools.items():
+                formatted_tools.append({
+                    "name": action,
+                    "description": tool_data.get("context", ""),
+                    "input_schema": tool_data.get("input_schema", {})
+                })
+            api_params["tools"] = formatted_tools
         
         logger.debug(f"Calling Anthropic API with model: {model_to_use}")
         

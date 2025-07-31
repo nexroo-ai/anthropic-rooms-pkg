@@ -4,8 +4,9 @@ from .actions.chat_completion import chat_completion
 from .actions.file_analysis import file_analysis
 from .actions.web_search import web_search
 from .services.credentials import CredentialsRegistry
+from .tools.base import ToolRegistry
 
-class TemplateRoomsAddon:
+class AnthropicRoomsAddon:
     """
     Template Rooms Package Addon Class
     
@@ -17,8 +18,21 @@ class TemplateRoomsAddon:
         self.modules = ["actions", "configuration", "memory", "services", "storage", "tools", "utils"]
         self.config = {}
         self.credentials = CredentialsRegistry()
+        self.tool_registry = ToolRegistry()
+
+    def loadTools(self, tools_dict, tool_functions, context):
+        self.tool_registry.register_tools(tools_dict, tool_functions, context)
+    
+    def getTools(self):
+        return self.tool_registry.get_tools_for_action()
+    
+    def clearTools(self):
+        self.tool_registry.clear()
 
     def chat_completion(self, message: str, **kwargs) -> dict:
+        tools = self.getTools()
+        if tools:
+            kwargs['tools'] = tools
         return chat_completion(self.config, message=message, **kwargs)
     
     def file_analysis(self, message: str, **kwargs) -> dict:
