@@ -3,7 +3,6 @@ from .baseconfig import BaseAddonConfig
 
 
 class CustomAddonConfig(BaseAddonConfig):
-    type: str = Field("anthropic", description="Anthropic AI addon type")
     model: str = Field("claude-3-5-sonnet-20241022", description="Default Anthropic model to use")
     max_tokens: int = Field(4096, description="Maximum tokens for responses")
     temperature: float = Field(0.7, description="Temperature for text generation")
