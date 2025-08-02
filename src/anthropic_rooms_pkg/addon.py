@@ -21,7 +21,12 @@ class AnthropicRoomsAddon:
         self.tool_registry = ToolRegistry()
 
     def loadTools(self, tools_dict, tool_functions, context):
+        logger.debug(f"Loading tools: {len(tools_dict)} tool groups")
+        logger.debug(f"Tool functions provided: {list(tool_functions.keys())}")
+        logger.debug(f"Context length: {len(context)} characters")
         self.tool_registry.register_tools(tools_dict, tool_functions, context)
+        registered_tools = self.tool_registry.get_tools_for_action()
+        logger.info(f"Successfully registered {len(registered_tools)} tools: {list(registered_tools.keys())}")
     
     def getTools(self):
         return self.tool_registry.get_tools_for_action()
@@ -30,9 +35,14 @@ class AnthropicRoomsAddon:
         self.tool_registry.clear()
 
     def chat_completion(self, message: str, **kwargs) -> dict:
+        logger.debug(f"Chat completion called with message: {message[:100]}...")
         tools = self.getTools()
+        logger.debug(f"Retrieved {len(tools)} tools from registry")
         if tools:
+            logger.info(f"Passing tools to chat_completion: {list(tools.keys())}")
             kwargs['tools'] = tools
+        else:
+            logger.debug("No tools available for this chat completion")
         return chat_completion(self.config, message=message, **kwargs)
     
     def file_analysis(self, message: str, **kwargs) -> dict:
@@ -55,7 +65,7 @@ class AnthropicRoomsAddon:
         total_components = 0
         for module_name in self.modules:
             try:
-                module = importlib.import_module(f"template_rooms_pkg.{module_name}")
+                module = importlib.import_module(f"anthropic_rooms_pkg.{module_name}")
                 components = getattr(module, '__all__', [])
                 component_count = len(components)
                 total_components += component_count
