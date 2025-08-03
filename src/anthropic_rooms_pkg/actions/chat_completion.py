@@ -37,7 +37,8 @@ def chat_completion(
     max_tokens: Optional[int] = None,
     temperature: Optional[float] = None,
     system: Optional[str] = None,
-    tools: Optional[Dict] = None
+    tools: Optional[Dict] = None,
+    tool_registry = None
 ) -> ActionResponse:
     logger.debug(f"Executing chat_completion with message: {message[:100]}...")
     
@@ -92,15 +93,97 @@ def chat_completion(
         
         response = client.messages.create(**api_params)
         
+        # Handle tool calls if present
         response_text = ""
-        if response.content and len(response.content) > 0:
-            response_text = response.content[0].text
+        tool_results = []
         
-        usage_info = {
-            "input_tokens": response.usage.input_tokens,
-            "output_tokens": response.usage.output_tokens,
-            "total_tokens": response.usage.input_tokens + response.usage.output_tokens
-        }
+        if response.content:
+            for content_block in response.content:
+                if content_block.type == "text":
+                    response_text += content_block.text
+                elif content_block.type == "tool_use" and tool_registry:
+                    # Execute the tool
+                    tool_name = content_block.name
+                    tool_input = content_block.input
+                    tool_id = content_block.id
+                    
+                    logger.debug(f"Executing tool: {tool_name} with input: {tool_input}")
+                    
+                    # Get the function from tool registry
+                    tool_function = tool_registry.get_function(tool_name)
+                    if tool_function:
+                        try:
+                            # Execute the tool function
+                            tool_result = tool_function(**tool_input)
+                            tool_results.append({
+                                "tool_use_id": tool_id,
+                                "content": str(tool_result)
+                            })
+                            logger.debug(f"Tool {tool_name} executed successfully")
+                        except Exception as e:
+                            logger.error(f"Tool {tool_name} execution failed: {str(e)}")
+                            tool_results.append({
+                                "tool_use_id": tool_id,
+                                "content": f"Error executing tool: {str(e)}"
+                            })
+                    else:
+                        logger.error(f"Tool function {tool_name} not found in registry")
+                        tool_results.append({
+                            "tool_use_id": tool_id,
+                            "content": f"Tool {tool_name} not found"
+                        })
+        
+        # If there were tool calls, continue the conversation with results
+        if tool_results:
+            # Add tool results to conversation and get final response
+            conversation_messages.append({
+                "role": "assistant",
+                "content": response.content
+            })
+            
+            conversation_messages.append({
+                "role": "user", 
+                "content": tool_results
+            })
+            
+            # Make another API call with tool results
+            final_api_params = {
+                "model": model_to_use,
+                "max_tokens": max_tokens_to_use,
+                "messages": conversation_messages
+            }
+            
+            if temperature_to_use is not None:
+                final_api_params["temperature"] = temperature_to_use
+            
+            if system:
+                final_api_params["system"] = system
+                
+            logger.debug("Calling Anthropic API again with tool results")
+            final_response = client.messages.create(**final_api_params)
+            
+            # Extract final response text
+            final_response_text = ""
+            if final_response.content:
+                for content_block in final_response.content:
+                    if content_block.type == "text":
+                        final_response_text += content_block.text
+            
+            response_text = final_response_text
+            
+            # Update usage info to include both calls
+            usage_info = {
+                "input_tokens": response.usage.input_tokens + final_response.usage.input_tokens,
+                "output_tokens": response.usage.output_tokens + final_response.usage.output_tokens,
+                "total_tokens": (response.usage.input_tokens + final_response.usage.input_tokens + 
+                               response.usage.output_tokens + final_response.usage.output_tokens)
+            }
+        else:
+            usage_info = {
+                "input_tokens": response.usage.input_tokens,
+                "output_tokens": response.usage.output_tokens,
+                "total_tokens": response.usage.input_tokens + response.usage.output_tokens
+            }
         
         tokens = TokensSchema(
             stepAmount=usage_info["output_tokens"],

@@ -41,6 +41,7 @@ class AnthropicRoomsAddon:
         if tools:
             logger.info(f"Passing tools to chat_completion: {list(tools.keys())}")
             kwargs['tools'] = tools
+            kwargs['tool_registry'] = self.tool_registry
         else:
             logger.debug("No tools available for this chat completion")
         return chat_completion(self.config, message=message, **kwargs)
