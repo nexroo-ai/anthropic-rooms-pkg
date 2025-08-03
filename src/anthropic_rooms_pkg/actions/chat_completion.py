@@ -116,6 +116,7 @@ def chat_completion(
                             # Execute the tool function
                             tool_result = tool_function(**tool_input)
                             tool_results.append({
+                                "type": "tool_result",
                                 "tool_use_id": tool_id,
                                 "content": str(tool_result)
                             })
@@ -123,12 +124,14 @@ def chat_completion(
                         except Exception as e:
                             logger.error(f"Tool {tool_name} execution failed: {str(e)}")
                             tool_results.append({
+                                "type": "tool_result",
                                 "tool_use_id": tool_id,
                                 "content": f"Error executing tool: {str(e)}"
                             })
                     else:
                         logger.error(f"Tool function {tool_name} not found in registry")
                         tool_results.append({
+                            "type": "tool_result",
                             "tool_use_id": tool_id,
                             "content": f"Tool {tool_name} not found"
                         })
