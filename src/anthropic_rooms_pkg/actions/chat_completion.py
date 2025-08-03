@@ -82,13 +82,10 @@ def chat_completion(
             api_params["system"] = system
         
         if tools:
+            # Tools are already in the correct Anthropic API format from ToolRegistry
             formatted_tools = []
             for action, tool_data in tools.items():
-                formatted_tools.append({
-                    "name": action,
-                    "description": tool_data.get("context", ""),
-                    "input_schema": tool_data.get("input_schema", {})
-                })
+                formatted_tools.append(tool_data)
             api_params["tools"] = formatted_tools
         
         logger.debug(f"Calling Anthropic API with model: {model_to_use}")
