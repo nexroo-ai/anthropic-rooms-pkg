@@ -47,13 +47,13 @@ class ToolRegistry:
                 continue
             
             # Convert Python types to JSON schema types
-            if param_type == str:
+            if param_type is str:
                 schema["properties"][param_name] = {"type": "string"}
-            elif param_type == int:
+            elif param_type is int:
                 schema["properties"][param_name] = {"type": "integer"}
-            elif param_type == float:
+            elif param_type is float:
                 schema["properties"][param_name] = {"type": "number"}
-            elif param_type == bool:
+            elif param_type is bool:
                 schema["properties"][param_name] = {"type": "boolean"}
             else:
                 # Default to string for other types
