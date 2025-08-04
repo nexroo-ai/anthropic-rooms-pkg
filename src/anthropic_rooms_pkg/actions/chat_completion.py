@@ -77,6 +77,22 @@ def _parse_tool_input(tool_input: Dict, tool_name: str, tools: Dict) -> Dict:
     
     return parsed_input
 
+def _determine_tool_success(tool_result) -> bool:
+    if not isinstance(tool_result, dict):
+        return True
+    
+    code = tool_result.get('code')
+    if code is not None and code >= 400:
+        return False
+    
+    return True
+
+def _extract_error_message(tool_result) -> str:
+    if not isinstance(tool_result, dict):
+        return None
+    
+    return tool_result.get('message', 'Tool execution completed with errors')
+
 def chat_completion(
     config: CustomAddonConfig,
     message: str,
@@ -135,6 +151,10 @@ def chat_completion(
             # Tools are already in the correct Anthropic API format from ToolRegistry
             logger.debug(f"Using tools: {list(tools.keys())}")
             logger.debug(f"Tool definitions: {tools}")
+            logger.debug(f"Tools being sent to AI model: {list(tools.keys())}")
+            for tool_name, tool_def in tools.items():
+                logger.debug(f"Tool '{tool_name}' description: {tool_def.get('description', 'No description')}")
+                logger.debug(f"Tool '{tool_name}' input schema: {tool_def.get('input_schema', 'No schema')}")
             formatted_tools = []
             for action, tool_data in tools.items():
                 formatted_tools.append(tool_data)
@@ -170,6 +190,9 @@ def chat_completion(
                             end_time = datetime.now()
                             execution_time_ms = (end_time - start_time).total_seconds() * 1000
                             
+                            success = _determine_tool_success(tool_result)
+                            error_message = _extract_error_message(tool_result) if not success else None
+                            
                             if observer_callback and addon_id:
                                 observer_callback(
                                     tool_name=tool_name,
@@ -177,7 +200,8 @@ def chat_completion(
                                     input_parameters=parsed_input,
                                     output_data=tool_result if isinstance(tool_result, dict) else {"result": tool_result},
                                     execution_time_ms=execution_time_ms,
-                                    success=True
+                                    success=success,
+                                    error_message=error_message
                                 )
                             
                             tool_results.append({
