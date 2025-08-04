@@ -29,6 +29,42 @@ class ActionOutput(OutputBase):
 
 ### ADD TOOL REGISTERY FIRST BEFORE CHAT COMPLETION ##
 
+def _parse_tool_input(tool_input: Dict, tool_name: str, tools: Dict) -> Dict:
+    import json
+    
+    if not tool_input or tool_name not in tools:
+        return tool_input
+    
+    tool_schema = tools[tool_name].get('input_schema', {})
+    properties = tool_schema.get('properties', {})
+    
+    if not properties:
+        return tool_input
+    
+    parsed_input = {}
+    
+    for param_name, param_value in tool_input.items():
+        parsed_input[param_name] = param_value
+        
+        if param_name not in properties or not isinstance(param_value, str):
+            continue
+            
+        param_schema = properties[param_name]
+        param_type = param_schema.get('type')
+        
+        if param_type in ['object', 'array']:
+            if param_value.strip().startswith(('{', '[')):
+                try:
+                    parsed_value = json.loads(param_value)
+                    parsed_input[param_name] = parsed_value
+                    logger.debug(f"Auto-parsed JSON for '{param_name}' in '{tool_name}'")
+                except (json.JSONDecodeError, ValueError) as e:
+                    logger.warning(f"Invalid JSON for '{param_name}' in '{tool_name}': {str(e)[:100]}")
+                    continue
+            elif param_value.strip() in ['null', 'None', '']:
+                parsed_input[param_name] = None if param_schema.get('default') is None else param_value
+    
+    return parsed_input
 
 def chat_completion(
     config: CustomAddonConfig,
@@ -115,8 +151,8 @@ def chat_completion(
                     tool_function = tool_registry.get_function(tool_name)
                     if tool_function:
                         try:
-                            # Execute the tool function
-                            tool_result = tool_function(**tool_input)
+                            parsed_input = _parse_tool_input(tool_input, tool_name, tools)
+                            tool_result = tool_function(**parsed_input)
                             tool_results.append({
                                 "type": "tool_result",
                                 "tool_use_id": tool_id,
