@@ -54,12 +54,22 @@ def _parse_tool_input(tool_input: Dict, tool_name: str, tools: Dict) -> Dict:
         
         if param_type in ['object', 'array']:
             if param_value.strip().startswith(('{', '[')):
+                parsed_value = None
+                
                 try:
                     parsed_value = json.loads(param_value)
+                except json.JSONDecodeError:
+                    try:
+                        import ast
+                        parsed_value = ast.literal_eval(param_value)
+                    except (ValueError, SyntaxError):
+                        pass
+                
+                if parsed_value is not None:
                     parsed_input[param_name] = parsed_value
                     logger.debug(f"Auto-parsed JSON for '{param_name}' in '{tool_name}'")
-                except (json.JSONDecodeError, ValueError) as e:
-                    logger.warning(f"Invalid JSON for '{param_name}' in '{tool_name}': {str(e)[:100]}")
+                else:
+                    logger.warning(f"Could not parse JSON/literal for '{param_name}' in '{tool_name}'")
                     continue
             elif param_value.strip() in ['null', 'None', '']:
                 parsed_input[param_name] = None if param_schema.get('default') is None else param_value
