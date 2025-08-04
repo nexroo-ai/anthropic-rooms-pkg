@@ -6,17 +6,21 @@ class ToolRegistry:
         self.functions: Dict[str, Callable] = {}
         self.tool_definitions: Dict[str, Dict[str, Any]] = {}
     
-    def register_tools(self, tools_dict: Dict[str, Dict[str, Any]], tool_functions: Dict[str, Callable], context: str):
+    def register_tools(self, tools_dict: Dict[str, Dict[str, Any]], tool_functions: Dict[str, Callable], context: str, tool_descriptions: Dict[str, str] = None):
+        tool_descriptions = tool_descriptions or {}
+        
         for tool_name, tool_config in tools_dict.items():
             if "action" in tool_config:
                 actions = tool_config["action"]
                 if isinstance(actions, list):
                     for action in actions:
                         if action in tool_functions:
-                            self._register_single_tool(action, tool_functions[action], context)
+                            custom_description = tool_descriptions.get(action, context)
+                            self._register_single_tool(action, tool_functions[action], custom_description)
                 elif isinstance(actions, str):
                     if actions in tool_functions:
-                        self._register_single_tool(actions, tool_functions[actions], context)
+                        custom_description = tool_descriptions.get(actions, context)
+                        self._register_single_tool(actions, tool_functions[actions], custom_description)
     
     def _register_single_tool(self, action_name: str, func: Callable, context: str):
         """Register a single tool with proper Anthropic API format"""
