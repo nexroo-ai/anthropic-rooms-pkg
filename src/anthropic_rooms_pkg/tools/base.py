@@ -31,9 +31,47 @@ class ToolRegistry:
         }
     
     def _convert_annotations_to_schema(self, func: Callable) -> Dict[str, Any]:
-        """Convert function annotations to JSON schema format for Anthropic API"""
+        try:
+            from pydantic import create_model
+            import inspect
+            
+            sig = inspect.signature(func)
+            if not sig.parameters:
+                return {"type": "object", "properties": {}, "required": []}
+            
+            fields = {}
+            for param_name, param in sig.parameters.items():
+                if param.annotation == inspect.Parameter.empty:
+                    fields[param_name] = (Any, ...)
+                else:
+                    if param.default == inspect.Parameter.empty:
+                        fields[param_name] = (param.annotation, ...)
+                    else:
+                        fields[param_name] = (param.annotation, param.default)
+            
+            DynamicModel = create_model('DynamicToolSchema', **fields)
+            schema = DynamicModel.model_json_schema()
+            
+            if "properties" not in schema:
+                schema["properties"] = {}
+            if "required" not in schema:
+                schema["required"] = []
+            if "type" not in schema:
+                schema["type"] = "object"
+                
+            return schema
+            
+        except Exception as e:
+            from loguru import logger
+            logger.warning(f"Pydantic schema generation failed for function '{func.__name__}': {str(e)}")
+            logger.warning(f"Falling back to basic type converter for function '{func.__name__}'")
+            return self._basic_type_converter(func)
+    
+    def _basic_type_converter(self, func: Callable) -> Dict[str, Any]:
+        import inspect
+        
         if not hasattr(func, '__annotations__'):
-            return {"type": "object", "properties": {}}
+            return {"type": "object", "properties": {}, "required": []}
         
         annotations = func.__annotations__
         schema = {
@@ -55,8 +93,11 @@ class ToolRegistry:
                 schema["properties"][param_name] = {"type": "number"}
             elif param_type is bool:
                 schema["properties"][param_name] = {"type": "boolean"}
+            elif param_type is dict or str(param_type) == "<class 'dict'>":
+                schema["properties"][param_name] = {"type": "object"}
             else:
-                # Default to string for other types
+                from loguru import logger
+                logger.warning(f"Unknown type '{param_type}' for parameter '{param_name}' in function '{func.__name__}', defaulting to string")
                 schema["properties"][param_name] = {"type": "string"}
             
             schema["required"].append(param_name)

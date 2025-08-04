@@ -84,6 +84,8 @@ def chat_completion(
         
         if tools:
             # Tools are already in the correct Anthropic API format from ToolRegistry
+            logger.debug(f"Using tools: {list(tools.keys())}")
+            logger.debug(f"Tool definitions: {tools}")
             formatted_tools = []
             for action, tool_data in tools.items():
                 formatted_tools.append(tool_data)
