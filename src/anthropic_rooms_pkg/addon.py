@@ -19,6 +19,8 @@ class AnthropicRoomsAddon:
         self.config = {}
         self.credentials = CredentialsRegistry()
         self.tool_registry = ToolRegistry()
+        self.observer_callback = None
+        self.addon_id = None
 
     def loadTools(self, tools_dict, tool_functions, context):
         logger.debug(f"Loading tools: {len(tools_dict)} tool groups")
@@ -34,6 +36,10 @@ class AnthropicRoomsAddon:
     def clearTools(self):
         self.tool_registry.clear()
 
+    def setObserverCallback(self, callback, addon_id: str):
+        self.observer_callback = callback
+        self.addon_id = addon_id
+
     def chat_completion(self, message: str, **kwargs) -> dict:
         logger.debug(f"Chat completion called with message: {message[:100]}...")
         tools = self.getTools()
@@ -44,6 +50,11 @@ class AnthropicRoomsAddon:
             kwargs['tool_registry'] = self.tool_registry
         else:
             logger.debug("No tools available for this chat completion")
+        
+        if self.observer_callback and self.addon_id:
+            kwargs['observer_callback'] = self.observer_callback
+            kwargs['addon_id'] = self.addon_id
+            
         return chat_completion(self.config, message=message, **kwargs)
     
     def file_analysis(self, message: str, **kwargs) -> dict:

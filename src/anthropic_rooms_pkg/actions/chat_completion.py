@@ -1,6 +1,7 @@
 from loguru import logger
 from typing import Optional, List, Dict
 from pydantic import BaseModel, Field
+from datetime import datetime
 import anthropic
 
 from .base import ActionResponse, OutputBase, TokensSchema
@@ -84,7 +85,9 @@ def chat_completion(
     temperature: Optional[float] = None,
     system: Optional[str] = None,
     tools: Optional[Dict] = None,
-    tool_registry = None
+    tool_registry = None,
+    observer_callback = None,
+    addon_id: str = None
 ) -> ActionResponse:
     logger.debug(f"Executing chat_completion with message: {message[:100]}...")
     
@@ -160,9 +163,23 @@ def chat_completion(
                     # Get the function from tool registry
                     tool_function = tool_registry.get_function(tool_name)
                     if tool_function:
+                        start_time = datetime.now()
                         try:
                             parsed_input = _parse_tool_input(tool_input, tool_name, tools)
                             tool_result = tool_function(**parsed_input)
+                            end_time = datetime.now()
+                            execution_time_ms = (end_time - start_time).total_seconds() * 1000
+                            
+                            if observer_callback and addon_id:
+                                observer_callback(
+                                    tool_name=tool_name,
+                                    addon_id=addon_id,
+                                    input_parameters=parsed_input,
+                                    output_data=tool_result if isinstance(tool_result, dict) else {"result": tool_result},
+                                    execution_time_ms=execution_time_ms,
+                                    success=True
+                                )
+                            
                             tool_results.append({
                                 "type": "tool_result",
                                 "tool_use_id": tool_id,
@@ -170,6 +187,19 @@ def chat_completion(
                             })
                             logger.debug(f"Tool {tool_name} executed successfully")
                         except Exception as e:
+                            end_time = datetime.now()
+                            execution_time_ms = (end_time - start_time).total_seconds() * 1000
+                            
+                            if observer_callback and addon_id:
+                                observer_callback(
+                                    tool_name=tool_name,
+                                    addon_id=addon_id,
+                                    input_parameters=parsed_input if 'parsed_input' in locals() else tool_input,
+                                    execution_time_ms=execution_time_ms,
+                                    success=False,
+                                    error_message=str(e)
+                                )
+                            
                             logger.error(f"Tool {tool_name} execution failed: {str(e)}")
                             tool_results.append({
                                 "type": "tool_result",
