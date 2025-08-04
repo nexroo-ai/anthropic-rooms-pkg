@@ -68,7 +68,6 @@ class ToolRegistry:
             return self._basic_type_converter(func)
     
     def _basic_type_converter(self, func: Callable) -> Dict[str, Any]:
-        import inspect
         
         if not hasattr(func, '__annotations__'):
             return {"type": "object", "properties": {}, "required": []}
