@@ -268,6 +268,12 @@ def chat_completion(
             if system:
                 next_api_params["system"] = system
                 
+            if tools:
+                formatted_tools = []
+                for action, tool_data in tools.items():
+                    formatted_tools.append(tool_data)
+                next_api_params["tools"] = formatted_tools
+                
             logger.debug("Calling Anthropic API again with tool results")
             current_response = client.messages.create(**next_api_params)
             all_responses.append(current_response)
