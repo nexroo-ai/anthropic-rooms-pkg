@@ -239,12 +239,15 @@ def chat_completion(
                             "content": f"Tool {tool_name} not found"
                         })
         
-        # If there were tool calls, continue the conversation with results
-        if tool_results:
-            # Add tool results to conversation and get final response
+        # Continue conversation with tool results until no more tools are called
+        all_responses = [response]
+        current_response = response
+        
+        while tool_results:
+            # Add tool results to conversation and get next response
             conversation_messages.append({
                 "role": "assistant",
-                "content": response.content
+                "content": current_response.content
             })
             
             conversation_messages.append({
@@ -253,36 +256,99 @@ def chat_completion(
             })
             
             # Make another API call with tool results
-            final_api_params = {
+            next_api_params = {
                 "model": model_to_use,
                 "max_tokens": max_tokens_to_use,
                 "messages": conversation_messages
             }
             
             if temperature_to_use is not None:
-                final_api_params["temperature"] = temperature_to_use
+                next_api_params["temperature"] = temperature_to_use
             
             if system:
-                final_api_params["system"] = system
+                next_api_params["system"] = system
                 
             logger.debug("Calling Anthropic API again with tool results")
-            final_response = client.messages.create(**final_api_params)
+            current_response = client.messages.create(**next_api_params)
+            all_responses.append(current_response)
             
-            # Extract final response text
-            final_response_text = ""
-            if final_response.content:
-                for content_block in final_response.content:
+            # Process the new response for additional tool calls
+            tool_results = []
+            if current_response.content:
+                for content_block in current_response.content:
                     if content_block.type == "text":
-                        final_response_text += content_block.text
-            
-            response_text = final_response_text
-            
-            # Update usage info to include both calls
+                        response_text += content_block.text
+                    elif content_block.type == "tool_use" and tool_registry:
+                        # Execute additional tools
+                        tool_name = content_block.name
+                        tool_input = content_block.input
+                        tool_id = content_block.id
+                        
+                        logger.debug(f"Executing additional tool: {tool_name} with input: {tool_input}")
+                        
+                        tool_function = tool_registry.get_function(tool_name)
+                        if tool_function:
+                            start_time = datetime.now()
+                            try:
+                                parsed_input = _parse_tool_input(tool_input, tool_name, tools)
+                                tool_result = tool_function(**parsed_input)
+                                end_time = datetime.now()
+                                execution_time_ms = (end_time - start_time).total_seconds() * 1000
+                                
+                                success = _determine_tool_success(tool_result)
+                                error_message = _extract_error_message(tool_result) if not success else None
+                                
+                                if observer_callback and addon_id:
+                                    observer_callback(
+                                        tool_name=tool_name,
+                                        addon_id=addon_id,
+                                        input_parameters=parsed_input,
+                                        output_data=tool_result if isinstance(tool_result, dict) else {"result": tool_result},
+                                        execution_time_ms=execution_time_ms,
+                                        success=success,
+                                        error_message=error_message
+                                    )
+                                
+                                tool_results.append({
+                                    "type": "tool_result",
+                                    "tool_use_id": tool_id,
+                                    "content": str(tool_result)
+                                })
+                                logger.debug(f"Additional tool {tool_name} executed successfully")
+                            except Exception as e:
+                                end_time = datetime.now()
+                                execution_time_ms = (end_time - start_time).total_seconds() * 1000
+                                
+                                if observer_callback and addon_id:
+                                    observer_callback(
+                                        tool_name=tool_name,
+                                        addon_id=addon_id,
+                                        input_parameters=parsed_input if 'parsed_input' in locals() else tool_input,
+                                        execution_time_ms=execution_time_ms,
+                                        success=False,
+                                        error_message=str(e)
+                                    )
+                                
+                                logger.error(f"Additional tool {tool_name} execution failed: {str(e)}")
+                                tool_results.append({
+                                    "type": "tool_result",
+                                    "tool_use_id": tool_id,
+                                    "content": f"Error executing tool: {str(e)}"
+                                })
+                        else:
+                            logger.error(f"Additional tool function {tool_name} not found in registry")
+                            tool_results.append({
+                                "type": "tool_result",
+                                "tool_use_id": tool_id,
+                                "content": f"Tool {tool_name} not found"
+                            })
+        
+        # Calculate total usage across all API calls
+        if len(all_responses) > 1:
             usage_info = {
-                "input_tokens": response.usage.input_tokens + final_response.usage.input_tokens,
-                "output_tokens": response.usage.output_tokens + final_response.usage.output_tokens,
-                "total_tokens": (response.usage.input_tokens + final_response.usage.input_tokens + 
-                               response.usage.output_tokens + final_response.usage.output_tokens)
+                "input_tokens": sum(r.usage.input_tokens for r in all_responses),
+                "output_tokens": sum(r.usage.output_tokens for r in all_responses),
+                "total_tokens": sum(r.usage.input_tokens + r.usage.output_tokens for r in all_responses)
             }
         else:
             usage_info = {
