@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "anthropic-rooms-pkg"
-version = "1.4.2"
+version = "1.4.3"
 description = "Anthropic rooms package for AI rooms script"
 readme = "README.md"
 license = {text = "MIT"}
