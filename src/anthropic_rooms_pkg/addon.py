@@ -22,12 +22,10 @@ class AnthropicRoomsAddon:
         self.observer_callback = None
         self.addon_id = None
 
-    def loadTools(self, tools_dict, tool_functions, context, tool_descriptions=None):
-        logger.debug(f"Loading tools: {len(tools_dict)} tool groups")
+    def loadTools(self, tool_functions, tool_descriptions=None):
         logger.debug(f"Tool functions provided: {list(tool_functions.keys())}")
-        logger.debug(f"Context length: {len(context)} characters")
         logger.debug(f"Tool descriptions provided: {tool_descriptions}")
-        self.tool_registry.register_tools(tools_dict, tool_functions, context, tool_descriptions)
+        self.tool_registry.register_tools(tool_functions, tool_descriptions)
         registered_tools = self.tool_registry.get_tools_for_action()
         logger.info(f"Successfully registered {len(registered_tools)} tools: {list(registered_tools.keys())}")
     

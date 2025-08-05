@@ -6,35 +6,19 @@ class ToolRegistry:
         self.functions: Dict[str, Callable] = {}
         self.tool_definitions: Dict[str, Dict[str, Any]] = {}
     
-    def register_tools(self, tools_dict: Dict[str, Dict[str, Any]], tool_functions: Dict[str, Callable], context: str, tool_descriptions: Dict[str, str] = None):
+    def register_tools(self, tool_functions: Dict[str, Callable], tool_descriptions: Dict[str, str] = None):
         tool_descriptions = tool_descriptions or {}
         
-        for tool_name, tool_config in tools_dict.items():
-            if "action" in tool_config:
-                actions = tool_config["action"]
-                if isinstance(actions, list):
-                    for action in actions:
-                        if action in tool_functions:
-                            if action in tool_descriptions:
-                                custom_description = tool_descriptions[action]
-                            else:
-                                if "::" in action:
-                                    addon_name = action.split("::")[0]
-                                    custom_description = f"Execute {action.split('::')[-1]} action from {addon_name} addon"
-                                else:
-                                    custom_description = f"Execute {action} action"
-                            self._register_single_tool(action, tool_functions[action], custom_description)
-                elif isinstance(actions, str):
-                    if actions in tool_functions:
-                        if actions in tool_descriptions:
-                            custom_description = tool_descriptions[actions]
-                        else:
-                            if "::" in actions:
-                                addon_name = actions.split("::")[0]
-                                custom_description = f"Execute {actions.split('::')[-1]} action from {addon_name} addon"
-                            else:
-                                custom_description = f"Execute {actions} action"
-                        self._register_single_tool(actions, tool_functions[actions], custom_description)
+        for action_name, func in tool_functions.items():
+            if action_name in tool_descriptions:
+                custom_description = tool_descriptions[action_name]
+            else:
+                if "::" in action_name:
+                    addon_name = action_name.split("::")[0]
+                    custom_description = f"Execute {action_name.split('::')[-1]} action from {addon_name} addon"
+                else:
+                    custom_description = f"Execute {action_name} action"
+            self._register_single_tool(action_name, func, custom_description)
     
     def _register_single_tool(self, action_name: str, func: Callable, context: str):
         """Register a single tool with proper Anthropic API format"""
