@@ -78,20 +78,22 @@ def _parse_tool_input(tool_input: Dict, tool_name: str, tools: Dict) -> Dict:
     return parsed_input
 
 def _determine_tool_success(tool_result) -> bool:
-    if not isinstance(tool_result, dict):
-        return True
-    
-    code = tool_result.get('code')
-    if code is not None and code >= 400:
-        return False
-    
+    if hasattr(tool_result, 'code'):
+        return tool_result.code < 400
+    elif isinstance(tool_result, dict):
+        code = tool_result.get('code')
+        if code is not None and code >= 400:
+            return False
     return True
 
 def _extract_error_message(tool_result) -> str:
-    if not isinstance(tool_result, dict):
-        return None
-    
-    return tool_result.get('message', 'Tool execution completed with errors')
+    if hasattr(tool_result, 'message') and hasattr(tool_result, 'code') and tool_result.code >= 400:
+        return tool_result.message
+    elif isinstance(tool_result, dict):
+        code = tool_result.get('code')
+        if code is not None and code >= 400:
+            return tool_result.get('message', 'Tool execution completed with errors')
+    return None
 
 def chat_completion(
     config: CustomAddonConfig,
