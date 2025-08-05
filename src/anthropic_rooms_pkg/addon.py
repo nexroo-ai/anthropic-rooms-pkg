@@ -13,6 +13,7 @@ class AnthropicRoomsAddon:
     This class provides access to all template rooms package functionality
     and can be instantiated by external programs using this package.
     """
+    type = "agent"
     
     def __init__(self):
         self.modules = ["actions", "configuration", "memory", "services", "storage", "tools", "utils"]

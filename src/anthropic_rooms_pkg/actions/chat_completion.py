@@ -148,7 +148,6 @@ def chat_completion(
             api_params["system"] = system
         
         if tools:
-            # Tools are already in the correct Anthropic API format from ToolRegistry
             logger.debug(f"Using tools: {list(tools.keys())}")
             logger.debug(f"Tool definitions: {tools}")
             logger.debug(f"Tools being sent to AI model: {list(tools.keys())}")
@@ -165,7 +164,6 @@ def chat_completion(
         
         response = client.messages.create(**api_params)
         
-        # Handle tool calls if present
         response_text = ""
         tool_results = []
         
@@ -174,14 +172,10 @@ def chat_completion(
                 if content_block.type == "text":
                     response_text += content_block.text
                 elif content_block.type == "tool_use" and tool_registry:
-                    # Execute the tool
                     tool_name = content_block.name
                     tool_input = content_block.input
                     tool_id = content_block.id
-                    
                     logger.debug(f"Executing tool: {tool_name} with input: {tool_input}")
-                    
-                    # Get the function from tool registry
                     tool_function = tool_registry.get_function(tool_name)
                     if tool_function:
                         start_time = datetime.now()
@@ -239,12 +233,10 @@ def chat_completion(
                             "content": f"Tool {tool_name} not found"
                         })
         
-        # Continue conversation with tool results until no more tools are called
         all_responses = [response]
         current_response = response
         
         while tool_results:
-            # Add tool results to conversation and get next response
             conversation_messages.append({
                 "role": "assistant",
                 "content": current_response.content
@@ -255,7 +247,6 @@ def chat_completion(
                 "content": tool_results
             })
             
-            # Make another API call with tool results
             next_api_params = {
                 "model": model_to_use,
                 "max_tokens": max_tokens_to_use,
@@ -285,14 +276,12 @@ def chat_completion(
                 if block.type == "tool_use":
                     logger.debug(f"Tool use block: name={block.name}, input={block.input}")
             
-            # Process the new response for additional tool calls
             tool_results = []
             if current_response.content:
                 for content_block in current_response.content:
                     if content_block.type == "text":
                         response_text += content_block.text
                     elif content_block.type == "tool_use" and tool_registry:
-                        # Execute additional tools
                         tool_name = content_block.name
                         tool_input = content_block.input
                         tool_id = content_block.id
@@ -356,7 +345,6 @@ def chat_completion(
                                 "content": f"Tool {tool_name} not found"
                             })
         
-        # Calculate total usage across all API calls
         if len(all_responses) > 1:
             usage_info = {
                 "input_tokens": sum(r.usage.input_tokens for r in all_responses),
