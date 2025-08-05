@@ -243,7 +243,7 @@ def chat_completion(
         all_responses = [response]
         current_response = response
         
-        while tool_results:
+        while tool_results or current_response.stop_reason == "tool_use":
             # Add tool results to conversation and get next response
             conversation_messages.append({
                 "role": "assistant",
