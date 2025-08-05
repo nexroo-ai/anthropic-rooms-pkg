@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.4.0 (2025-08-05)
+
+### Features
+
+- Addon type add
+  ([`d36a16f`](https://github.com/synvex-ai/anthropic-rooms-pkg/commit/d36a16faa427ba1d0df4fcdf4da190f00cacb368))
+
+
 ## v1.3.6 (2025-08-05)
 
 
