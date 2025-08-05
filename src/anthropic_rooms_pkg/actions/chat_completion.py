@@ -243,7 +243,7 @@ def chat_completion(
         all_responses = [response]
         current_response = response
         
-        while tool_results or current_response.stop_reason == "tool_use":
+        while tool_results:
             # Add tool results to conversation and get next response
             conversation_messages.append({
                 "role": "assistant",
@@ -271,6 +271,13 @@ def chat_completion(
             logger.debug("Calling Anthropic API again with tool results")
             current_response = client.messages.create(**next_api_params)
             all_responses.append(current_response)
+            
+            logger.debug(f"Second API response stop_reason: {current_response.stop_reason}")
+            logger.debug(f"Second API response content blocks: {len(current_response.content)}")
+            for i, block in enumerate(current_response.content):
+                logger.debug(f"Content block {i}: type={block.type}")
+                if block.type == "tool_use":
+                    logger.debug(f"Tool use block: name={block.name}, input={block.input}")
             
             # Process the new response for additional tool calls
             tool_results = []
