@@ -45,10 +45,11 @@ class AnthropicRoomsAddon:
         
         return PrefixedLogger(self.type)
 
-    def loadTools(self, tool_functions, tool_descriptions=None):
+    def loadTools(self, tool_functions, tool_descriptions=None, tool_max_retries=None):
         self.logger.debug(f"Tool functions provided: {list(tool_functions.keys())}")
         self.logger.debug(f"Tool descriptions provided: {tool_descriptions}")
-        self.tool_registry.register_tools(tool_functions, tool_descriptions)
+        self.logger.debug(f"Tool max retries provided: {tool_max_retries}")
+        self.tool_registry.register_tools(tool_functions, tool_descriptions, tool_max_retries)
         registered_tools = self.tool_registry.get_tools_for_action()
         self.logger.info(f"Successfully registered {len(registered_tools)} tools: {list(registered_tools.keys())}")
     

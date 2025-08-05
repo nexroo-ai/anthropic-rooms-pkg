@@ -5,9 +5,11 @@ class ToolRegistry:
     def __init__(self):
         self.functions: Dict[str, Callable] = {}
         self.tool_definitions: Dict[str, Dict[str, Any]] = {}
+        self.tool_max_retries: Dict[str, int] = {}
     
-    def register_tools(self, tool_functions: Dict[str, Callable], tool_descriptions: Dict[str, str] = None):
+    def register_tools(self, tool_functions: Dict[str, Callable], tool_descriptions: Dict[str, str] = None, tool_max_retries: Dict[str, int] = None):
         tool_descriptions = tool_descriptions or {}
+        tool_max_retries = tool_max_retries or {}
         
         for action_name, func in tool_functions.items():
             if action_name in tool_descriptions:
@@ -18,6 +20,9 @@ class ToolRegistry:
                     custom_description = f"Execute {action_name.split('::')[-1]} action from {addon_name} addon"
                 else:
                     custom_description = f"Execute {action_name} action"
+            
+            max_retry = tool_max_retries.get(action_name, 0)
+            self.tool_max_retries[action_name] = max_retry
             self._register_single_tool(action_name, func, custom_description)
     
     def _register_single_tool(self, action_name: str, func: Callable, context: str):
@@ -113,6 +118,11 @@ class ToolRegistry:
         """Get the actual function for execution"""
         return self.functions.get(action_name)
     
+    def get_max_retries(self, action_name: str) -> int:
+        """Get the max retries for a tool"""
+        return self.tool_max_retries.get(action_name, 0)
+    
     def clear(self):
         self.functions.clear()
         self.tool_definitions.clear()
+        self.tool_max_retries.clear()

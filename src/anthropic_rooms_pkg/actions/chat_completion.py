@@ -95,6 +95,77 @@ def _extract_error_message(tool_result) -> str:
             return tool_result.get('message', 'Tool execution completed with errors')
     return None
 
+def _execute_tool_with_retries(tool_name, tool_input, tool_registry, tools, tool_retry_counts, conversation_messages, observer_callback, addon_id):
+    max_retries = tool_registry.get_max_retries(tool_name)
+    current_retry = tool_retry_counts.get(tool_name, 0)
+    
+    tool_function = tool_registry.get_function(tool_name)
+    if not tool_function:
+        return None, f"Tool {tool_name} not found"
+    
+    start_time = datetime.now()
+    try:
+        parsed_input = _parse_tool_input(tool_input, tool_name, tools)
+        tool_result = tool_function(**parsed_input)
+        end_time = datetime.now()
+        execution_time_ms = (end_time - start_time).total_seconds() * 1000
+        
+        success = _determine_tool_success(tool_result)
+        error_message = _extract_error_message(tool_result) if not success else None
+        
+        if observer_callback and addon_id:
+            observer_callback(
+                tool_name=tool_name,
+                addon_id=addon_id,
+                input_parameters=parsed_input,
+                output_data=tool_result if isinstance(tool_result, dict) else {"result": tool_result},
+                execution_time_ms=execution_time_ms,
+                success=success,
+                error_message=error_message,
+                retry_attempt=current_retry,
+                max_retries=max_retries
+            )
+        
+        if success or current_retry >= max_retries:
+            return tool_result, error_message
+        else:
+            tool_retry_counts[tool_name] = current_retry + 1
+            if error_message:
+                retry_message = f"The {tool_name} tool failed with error: {error_message}. Please try again with corrected parameters."
+                conversation_messages.append({
+                    "role": "user",
+                    "content": retry_message
+                })
+            return "RETRY", error_message
+            
+    except Exception as e:
+        end_time = datetime.now()
+        execution_time_ms = (end_time - start_time).total_seconds() * 1000
+        error_msg = str(e)
+        
+        if observer_callback and addon_id:
+            observer_callback(
+                tool_name=tool_name,
+                addon_id=addon_id,
+                input_parameters=parsed_input if 'parsed_input' in locals() else tool_input,
+                execution_time_ms=execution_time_ms,
+                success=False,
+                error_message=error_msg,
+                retry_attempt=current_retry,
+                max_retries=max_retries
+            )
+        
+        if current_retry >= max_retries:
+            return None, error_msg
+        else:
+            tool_retry_counts[tool_name] = current_retry + 1
+            retry_message = f"The {tool_name} tool failed with error: {error_msg}. Please try again with corrected parameters."
+            conversation_messages.append({
+                "role": "user", 
+                "content": retry_message
+            })
+            return "RETRY", error_msg
+
 def chat_completion(
     config: CustomAddonConfig,
     message: str,
@@ -168,6 +239,7 @@ def chat_completion(
         
         response_text = ""
         tool_results = []
+        tool_retry_counts = {}
         
         if response.content:
             for content_block in response.content:
@@ -178,76 +250,47 @@ def chat_completion(
                     tool_input = content_block.input
                     tool_id = content_block.id
                     logger.debug(f"Executing tool: {tool_name} with input: {tool_input}")
-                    tool_function = tool_registry.get_function(tool_name)
-                    if tool_function:
-                        start_time = datetime.now()
-                        try:
-                            parsed_input = _parse_tool_input(tool_input, tool_name, tools)
-                            tool_result = tool_function(**parsed_input)
-                            end_time = datetime.now()
-                            execution_time_ms = (end_time - start_time).total_seconds() * 1000
-                            
-                            success = _determine_tool_success(tool_result)
-                            error_message = _extract_error_message(tool_result) if not success else None
-                            
-                            if observer_callback and addon_id:
-                                observer_callback(
-                                    tool_name=tool_name,
-                                    addon_id=addon_id,
-                                    input_parameters=parsed_input,
-                                    output_data=tool_result if isinstance(tool_result, dict) else {"result": tool_result},
-                                    execution_time_ms=execution_time_ms,
-                                    success=success,
-                                    error_message=error_message
-                                )
-                            
-                            tool_results.append({
-                                "type": "tool_result",
-                                "tool_use_id": tool_id,
-                                "content": str(tool_result)
-                            })
-                            logger.debug(f"Tool {tool_name} executed successfully")
-                        except Exception as e:
-                            end_time = datetime.now()
-                            execution_time_ms = (end_time - start_time).total_seconds() * 1000
-                            
-                            if observer_callback and addon_id:
-                                observer_callback(
-                                    tool_name=tool_name,
-                                    addon_id=addon_id,
-                                    input_parameters=parsed_input if 'parsed_input' in locals() else tool_input,
-                                    execution_time_ms=execution_time_ms,
-                                    success=False,
-                                    error_message=str(e)
-                                )
-                            
-                            logger.error(f"Tool {tool_name} execution failed: {str(e)}")
-                            tool_results.append({
-                                "type": "tool_result",
-                                "tool_use_id": tool_id,
-                                "content": f"Error executing tool: {str(e)}"
-                            })
-                    else:
-                        logger.error(f"Tool function {tool_name} not found in registry")
+                    
+                    tool_result, error_message = _execute_tool_with_retries(
+                        tool_name, tool_input, tool_registry, tools, tool_retry_counts, 
+                        conversation_messages, observer_callback, addon_id
+                    )
+                    
+                    if tool_result == "RETRY":
+                        should_retry = True
+                        continue
+                    elif tool_result is not None:
                         tool_results.append({
                             "type": "tool_result",
                             "tool_use_id": tool_id,
-                            "content": f"Tool {tool_name} not found"
+                            "content": str(tool_result)
+                        })
+                        logger.debug(f"Tool {tool_name} executed successfully")
+                    else:
+                        logger.error(f"Tool {tool_name} execution failed: {error_message}")
+                        tool_results.append({
+                            "type": "tool_result",
+                            "tool_use_id": tool_id,
+                            "content": f"Error executing tool: {error_message}"
                         })
         
         all_responses = [response]
         current_response = response
         
-        while tool_results:
-            conversation_messages.append({
-                "role": "assistant",
-                "content": current_response.content
-            })
+        should_retry = False
+        while tool_results or should_retry:
+            if not should_retry:
+                conversation_messages.append({
+                    "role": "assistant",
+                    "content": current_response.content
+                })
+                
+                conversation_messages.append({
+                    "role": "user", 
+                    "content": tool_results
+                })
             
-            conversation_messages.append({
-                "role": "user", 
-                "content": tool_results
-            })
+            should_retry = False
             
             next_api_params = {
                 "model": model_to_use,
@@ -290,61 +333,27 @@ def chat_completion(
                         
                         logger.debug(f"Executing additional tool: {tool_name} with input: {tool_input}")
                         
-                        tool_function = tool_registry.get_function(tool_name)
-                        if tool_function:
-                            start_time = datetime.now()
-                            try:
-                                parsed_input = _parse_tool_input(tool_input, tool_name, tools)
-                                tool_result = tool_function(**parsed_input)
-                                end_time = datetime.now()
-                                execution_time_ms = (end_time - start_time).total_seconds() * 1000
-                                
-                                success = _determine_tool_success(tool_result)
-                                error_message = _extract_error_message(tool_result) if not success else None
-                                
-                                if observer_callback and addon_id:
-                                    observer_callback(
-                                        tool_name=tool_name,
-                                        addon_id=addon_id,
-                                        input_parameters=parsed_input,
-                                        output_data=tool_result if isinstance(tool_result, dict) else {"result": tool_result},
-                                        execution_time_ms=execution_time_ms,
-                                        success=success,
-                                        error_message=error_message
-                                    )
-                                
-                                tool_results.append({
-                                    "type": "tool_result",
-                                    "tool_use_id": tool_id,
-                                    "content": str(tool_result)
-                                })
-                                logger.debug(f"Additional tool {tool_name} executed successfully")
-                            except Exception as e:
-                                end_time = datetime.now()
-                                execution_time_ms = (end_time - start_time).total_seconds() * 1000
-                                
-                                if observer_callback and addon_id:
-                                    observer_callback(
-                                        tool_name=tool_name,
-                                        addon_id=addon_id,
-                                        input_parameters=parsed_input if 'parsed_input' in locals() else tool_input,
-                                        execution_time_ms=execution_time_ms,
-                                        success=False,
-                                        error_message=str(e)
-                                    )
-                                
-                                logger.error(f"Additional tool {tool_name} execution failed: {str(e)}")
-                                tool_results.append({
-                                    "type": "tool_result",
-                                    "tool_use_id": tool_id,
-                                    "content": f"Error executing tool: {str(e)}"
-                                })
-                        else:
-                            logger.error(f"Additional tool function {tool_name} not found in registry")
+                        tool_result, error_message = _execute_tool_with_retries(
+                            tool_name, tool_input, tool_registry, tools, tool_retry_counts, 
+                            conversation_messages, observer_callback, addon_id
+                        )
+                        
+                        if tool_result == "RETRY":
+                            should_retry = True
+                            continue
+                        elif tool_result is not None:
                             tool_results.append({
                                 "type": "tool_result",
                                 "tool_use_id": tool_id,
-                                "content": f"Tool {tool_name} not found"
+                                "content": str(tool_result)
+                            })
+                            logger.debug(f"Additional tool {tool_name} executed successfully")
+                        else:
+                            logger.error(f"Additional tool {tool_name} execution failed: {error_message}")
+                            tool_results.append({
+                                "type": "tool_result",
+                                "tool_use_id": tool_id,
+                                "content": f"Error executing tool: {error_message}"
                             })
         
         if len(all_responses) > 1:
