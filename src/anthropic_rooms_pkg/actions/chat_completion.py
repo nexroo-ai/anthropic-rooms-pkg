@@ -152,6 +152,7 @@ def chat_completion(
             logger.debug(f"Using tools: {list(tools.keys())}")
             logger.debug(f"Tool definitions: {tools}")
             logger.debug(f"Tools being sent to AI model: {list(tools.keys())}")
+            
             for tool_name, tool_def in tools.items():
                 logger.debug(f"Tool '{tool_name}' description: {tool_def.get('description', 'No description')}")
                 logger.debug(f"Tool '{tool_name}' input schema: {tool_def.get('input_schema', 'No schema')}")

@@ -15,11 +15,25 @@ class ToolRegistry:
                 if isinstance(actions, list):
                     for action in actions:
                         if action in tool_functions:
-                            custom_description = tool_descriptions.get(action, context)
+                            if action in tool_descriptions:
+                                custom_description = tool_descriptions[action]
+                            else:
+                                if "::" in action:
+                                    addon_name = action.split("::")[0]
+                                    custom_description = f"Execute {action.split('::')[-1]} action from {addon_name} addon"
+                                else:
+                                    custom_description = f"Execute {action} action"
                             self._register_single_tool(action, tool_functions[action], custom_description)
                 elif isinstance(actions, str):
                     if actions in tool_functions:
-                        custom_description = tool_descriptions.get(actions, context)
+                        if actions in tool_descriptions:
+                            custom_description = tool_descriptions[actions]
+                        else:
+                            if "::" in actions:
+                                addon_name = actions.split("::")[0]
+                                custom_description = f"Execute {actions.split('::')[-1]} action from {addon_name} addon"
+                            else:
+                                custom_description = f"Execute {actions} action"
                         self._register_single_tool(actions, tool_functions[actions], custom_description)
     
     def _register_single_tool(self, action_name: str, func: Callable, context: str):
