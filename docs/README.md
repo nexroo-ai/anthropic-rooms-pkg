@@ -214,7 +214,7 @@ When tools are registered via `useStorage` or `useContext`, they become availabl
 }
 ```
 
-For detailed tool usage patterns, refer to the [AI Features documentation](../ai-rooms-script/docusaurus/docusaurus-docs/docs/ai-features.md). 
+For detailed tool usage patterns, refer to the [AI Features documentation](../ai-features). 
 
 
 ## Testing & Lint
@@ -246,4 +246,4 @@ For this, use the apprioriate commit message syntax for semantic release in gith
 
 ## Developers / Mainteners
 
-- Adrien EPPLING :  [Contact me](adrienesofts@gmail.com)
+- Adrien EPPLING :  [adrienesofts@gmail.com](mailto:adrienesofts@gmail.com)
