@@ -370,7 +370,7 @@ def chat_completion(
             }
         
         tokens = TokensSchema(
-            stepAmount=usage_info["output_tokens"],
+            stepAmount=usage_info["total_tokens"],
             totalCurrentAmount=usage_info["total_tokens"]
         )
         
