@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.5.0 (2025-08-11)
+
+### Features
+
+- **docs**: User doc v1
+  ([`033da77`](https://github.com/synvex-ai/anthropic-rooms-pkg/commit/033da779c52ad6b36aa73119eec049c94536bf9b))
+
+
 ## v1.4.3 (2025-08-05)
 
 
