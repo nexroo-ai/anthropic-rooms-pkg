@@ -55,7 +55,7 @@ jobs:
         run: poetry install --no-interaction --no-ansi
 
       - name: Run tests with coverage
-        run: poetry run pytest tests/ --cov=src/anthropic_rooms_pkg --cov-report=term-missing --cov-report=xml --cov-fail-under=40
+        run: poetry run pytest tests/ --cov=src/anthropic_rooms_pkg --cov-report=term-missing --cov-report=xml --cov-fail-under=45
 
   release:
     name: Release
