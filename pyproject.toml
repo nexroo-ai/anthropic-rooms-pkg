@@ -32,6 +32,56 @@ where = ["src"]
 [tool.setuptools.package-dir]
 "" = "src"
 
+
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+    "W191",  # indentation contains tabs
+]
+
+per-file-ignores = {"__init__.py" = ["F401"], "tests/*" = ["F401", "F811"]}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--disable-warnings",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+[tool.coverage.run]
+source = ["src/template_rooms_pkg"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/virtualenvs/*",
+]
+
 [tool.semantic_release]
 branch = "main"
 upload_to_pypi = false
@@ -42,6 +92,10 @@ build_command = "python -m build"
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.12.3"
 pre-commit = "^4.2.0"
+pytest = "^8.4.1"
+pytest-cov = "^6.2.1"
+pytest-mock = "^3.14.1"
+pytest-asyncio = "^1.1.0"
 
 [project.urls]
 Homepage = "https://github.com/synvex/anthropic-rooms-pkg"

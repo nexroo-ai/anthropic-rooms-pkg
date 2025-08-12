@@ -34,10 +34,33 @@ jobs:
       - name: Run Ruff lint
         run: poetry run ruff check .
 
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-ansi
+
+      - name: Run tests with coverage
+        run: poetry run pytest tests/ --cov=src/anthropic_rooms_pkg --cov-report=term-missing --cov-report=xml --cov-fail-under=40
+
   release:
     name: Release
     runs-on: ubuntu-latest
-    needs: lint
+    needs: [lint, test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Checkout
