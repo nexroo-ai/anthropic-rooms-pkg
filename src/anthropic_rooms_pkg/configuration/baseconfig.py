@@ -3,7 +3,6 @@ from pydantic import BaseModel, Field
 
 
 class RequiredSecretsBase(BaseModel):
-    """Base model for defining required secrets configuration."""
     pass
 
 

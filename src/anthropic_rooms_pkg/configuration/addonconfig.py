@@ -3,7 +3,6 @@ from .baseconfig import BaseAddonConfig, RequiredSecretsBase
 
 
 class CustomRequiredSecrets(RequiredSecretsBase):
-    """Required secrets for custom addon."""
     anthropic_api_key: str = Field(..., description="Anthropic API key environment variable name")
 
 
@@ -14,7 +13,6 @@ class CustomAddonConfig(BaseAddonConfig):
     
     @classmethod
     def get_required_secrets(cls) -> CustomRequiredSecrets:
-        """Get the required secrets configuration for this addon."""
         return CustomRequiredSecrets(anthropic_api_key="anthropic_api_key")
     
     @model_validator(mode='after')
