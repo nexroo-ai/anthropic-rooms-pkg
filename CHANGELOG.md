@@ -2,6 +2,26 @@
 
 <!-- version list -->
 
+## v1.6.0 (2025-08-29)
+
+### Bug Fixes
+
+- Bypass ruff tmp
+  ([`25a91e3`](https://github.com/synvex-ai/anthropic-rooms-pkg/commit/25a91e31a03e3e155b2b7e9f87a34abf9c955254))
+
+- Lint & bypass test
+  ([`771ff3b`](https://github.com/synvex-ai/anthropic-rooms-pkg/commit/771ff3bc8862b3d157ef7dad8a25a5077b163bfa))
+
+- Maj secret field
+  ([`4426724`](https://github.com/synvex-ai/anthropic-rooms-pkg/commit/4426724c3e27da088ac6efe3f3541bf3ec59cadc))
+
+- Remove com
+  ([`5d005a1`](https://github.com/synvex-ai/anthropic-rooms-pkg/commit/5d005a15f706a0486f972e4a5fdb53e08b65813c))
+
+- Test coverage threshold
+  ([`8a72ad5`](https://github.com/synvex-ai/anthropic-rooms-pkg/commit/8a72ad57239e53250268702eb6e51d52154e35d7))
+
+
 ## v1.5.1 (2025-08-11)
 
 
