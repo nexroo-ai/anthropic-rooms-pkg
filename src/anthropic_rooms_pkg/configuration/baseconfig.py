@@ -1,5 +1,10 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 from pydantic import BaseModel, Field
+
+
+class RequiredSecretsBase(BaseModel):
+    """Base model for defining required secrets configuration."""
+    pass
 
 
 class BaseAddonConfig(BaseModel):    
