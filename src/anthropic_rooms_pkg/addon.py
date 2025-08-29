@@ -1,10 +1,13 @@
 import importlib
+
 from loguru import logger
+
 from .actions.chat_completion import chat_completion
 from .actions.file_analysis import file_analysis
 from .actions.web_search import web_search
 from .services.credentials import CredentialsRegistry
 from .tools.base import ToolRegistry
+
 
 class AnthropicRoomsAddon:
     """
@@ -14,7 +17,7 @@ class AnthropicRoomsAddon:
     and can be instantiated by external programs using this package.
     """
     type = "agent"
-    
+
     def __init__(self):
         self.modules = ["actions", "configuration", "memory", "services", "storage", "tools", "utils"]
         self.config = {}
@@ -22,7 +25,7 @@ class AnthropicRoomsAddon:
         self.tool_registry = ToolRegistry()
         self.observer_callback = None
         self.addon_id = None
-    
+
     @property
     def logger(self):
         """Custom logger that prefixes all messages with addon type"""
@@ -30,19 +33,19 @@ class AnthropicRoomsAddon:
             def __init__(self, addon_type):
                 self.addon_type = addon_type
                 self._logger = logger
-            
+
             def debug(self, message):
                 self._logger.debug(f"[TYPE: {self.addon_type.upper()}] {message}")
-            
+
             def info(self, message):
                 self._logger.info(f"[TYPE: {self.addon_type.upper()}] {message}")
-            
+
             def warning(self, message):
                 self._logger.warning(f"[TYPE: {self.addon_type.upper()}] {message}")
-            
+
             def error(self, message):
                 self._logger.error(f"[TYPE: {self.addon_type.upper()}] {message}")
-        
+
         return PrefixedLogger(self.type)
 
     def loadTools(self, tool_functions, tool_descriptions=None, tool_max_retries=None):
@@ -52,10 +55,10 @@ class AnthropicRoomsAddon:
         self.tool_registry.register_tools(tool_functions, tool_descriptions, tool_max_retries)
         registered_tools = self.tool_registry.get_tools_for_action()
         self.logger.info(f"Successfully registered {len(registered_tools)} tools: {list(registered_tools.keys())}")
-    
+
     def getTools(self):
         return self.tool_registry.get_tools_for_action()
-    
+
     def clearTools(self):
         self.tool_registry.clear()
 
@@ -73,16 +76,16 @@ class AnthropicRoomsAddon:
             kwargs['tool_registry'] = self.tool_registry
         else:
             self.logger.debug("No tools available for this chat completion")
-        
+
         if self.observer_callback and self.addon_id:
             kwargs['observer_callback'] = self.observer_callback
             kwargs['addon_id'] = self.addon_id
-            
+
         return chat_completion(self.config, message=message, **kwargs)
-    
+
     def file_analysis(self, message: str, **kwargs) -> dict:
         return file_analysis(self.config, message=message, **kwargs)
-    
+
     def web_search(self, query: str, **kwargs) -> dict:
         return web_search(self.config, query=query, **kwargs)
 
@@ -96,7 +99,7 @@ class AnthropicRoomsAddon:
             bool: True if test passes, False otherwise
         """
         self.logger.info("Running template-rooms-pkg test...")
-        
+
         total_components = 0
         for module_name in self.modules:
             try:
@@ -125,7 +128,7 @@ class AnthropicRoomsAddon:
                                 if component_name in ['ActionInput', 'ActionOutput', 'ActionResponse', 'OutputBase', 'TokensSchema']:
                                     self.logger.info(f"Component {component_name} requires parameters, skipping instantiation")
                                     skip_instantiation = True
-                                
+
                                 if not skip_instantiation:
                                     # result = component()
                                     self.logger.info(f"Component {component_name}() would be executed successfully")
@@ -145,7 +148,7 @@ class AnthropicRoomsAddon:
         self.logger.info("Template rooms package test completed successfully!")
         self.logger.info(f"Total components loaded: {total_components} across {len(self.modules)} modules")
         return True
-    
+
     def loadAddonConfig(self, addon_config: dict):
         """
         Load addon configuration.
@@ -184,7 +187,7 @@ class AnthropicRoomsAddon:
                 missing_secrets = [secret for secret in required_secrets if secret not in kwargs]
                 if missing_secrets:
                     raise ValueError(f"Missing required secrets: {missing_secrets}")
-            
+
             self.credentials.store_multiple(kwargs)
             self.logger.info(f"Loaded {len(kwargs)} credentials successfully")
             return True

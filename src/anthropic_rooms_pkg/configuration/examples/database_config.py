@@ -1,17 +1,18 @@
 from pydantic import Field, model_validator
+
 from .baseconfig import BaseAddonConfig
 
 
 class CustomAddonConfig(BaseAddonConfig):
     """Database addon example"""
-    
+
     type: str = Field("database", description="Database addon type")
-    
+
     # Required database fields
     host: str = Field(..., description="Database host")
     database: str = Field(..., description="Database name")
     port: int = Field(5432, description="Database port")
-    
+
     @model_validator(mode='after')
     def validate_db_secrets(self):
         """Ensure database secrets are present"""

@@ -191,11 +191,11 @@ class TestAnthropicRoomsAddon:
         addon = AnthropicRoomsAddon()
         mock_config = Mock()
         addon.config = mock_config
-        
+
         tools = {"test_tool": {"name": "test_tool"}}
         with patch.object(addon, 'getTools', return_value=tools):
             addon.chat_completion("test message", temperature=0.5)
-            
+
             mock_chat_completion.assert_called_once()
             call_args = mock_chat_completion.call_args
             assert call_args[0][0] == mock_config
@@ -209,10 +209,10 @@ class TestAnthropicRoomsAddon:
         addon = AnthropicRoomsAddon()
         mock_config = Mock()
         addon.config = mock_config
-        
+
         with patch.object(addon, 'getTools', return_value={}):
             addon.chat_completion("test message")
-            
+
             mock_chat_completion.assert_called_once()
             call_args = mock_chat_completion.call_args
             assert 'tools' not in call_args[1]
@@ -225,10 +225,10 @@ class TestAnthropicRoomsAddon:
         addon.config = mock_config
         addon.observer_callback = Mock()
         addon.addon_id = "test_id"
-        
+
         with patch.object(addon, 'getTools', return_value={}):
             addon.chat_completion("test message")
-            
+
             call_args = mock_chat_completion.call_args
             assert call_args[1]['observer_callback'] == addon.observer_callback
             assert call_args[1]['addon_id'] == "test_id"
@@ -238,12 +238,12 @@ class TestAnthropicRoomsAddon:
         addon = AnthropicRoomsAddon()
         mock_config = Mock()
         addon.config = mock_config
-        
+
         addon.file_analysis("analyze file", file_id="file123")
-        
+
         mock_file_analysis.assert_called_once_with(
-            mock_config, 
-            message="analyze file", 
+            mock_config,
+            message="analyze file",
             file_id="file123"
         )
 
@@ -252,12 +252,12 @@ class TestAnthropicRoomsAddon:
         addon = AnthropicRoomsAddon()
         mock_config = Mock()
         addon.config = mock_config
-        
+
         addon.web_search("search query", max_tokens=500)
-        
+
         mock_web_search.assert_called_once_with(
-            mock_config, 
-            query="search query", 
+            mock_config,
+            query="search query",
             max_tokens=500
         )
 
