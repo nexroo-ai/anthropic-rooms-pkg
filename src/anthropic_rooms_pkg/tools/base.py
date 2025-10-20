@@ -1,13 +1,13 @@
-from typing import Any, Callable, Dict
+from typing import Any, Callable
 
 
 class ToolRegistry:
     def __init__(self):
-        self.functions: Dict[str, Callable] = {}
-        self.tool_definitions: Dict[str, Dict[str, Any]] = {}
-        self.tool_max_retries: Dict[str, int] = {}
+        self.functions: dict[str, Callable] = {}
+        self.tool_definitions: dict[str, dict[str, Any]] = {}
+        self.tool_max_retries: dict[str, int] = {}
 
-    def register_tools(self, tool_functions: Dict[str, Callable], tool_descriptions: Dict[str, str] = None, tool_max_retries: Dict[str, int] = None):
+    def register_tools(self, tool_functions: dict[str, Callable], tool_descriptions: dict[str, str] = None, tool_max_retries: dict[str, int] = None):
         tool_descriptions = tool_descriptions or {}
         tool_max_retries = tool_max_retries or {}
 
@@ -37,7 +37,7 @@ class ToolRegistry:
             "input_schema": self._convert_annotations_to_schema(func)
         }
 
-    def _convert_annotations_to_schema(self, func: Callable) -> Dict[str, Any]:
+    def _convert_annotations_to_schema(self, func: Callable) -> dict[str, Any]:
         try:
             import inspect
 
@@ -75,7 +75,7 @@ class ToolRegistry:
             logger.warning(f"Falling back to basic type converter for function '{func.__name__}'")
             return self._basic_type_converter(func)
 
-    def _basic_type_converter(self, func: Callable) -> Dict[str, Any]:
+    def _basic_type_converter(self, func: Callable) -> dict[str, Any]:
 
         if not hasattr(func, '__annotations__'):
             return {"type": "object", "properties": {}, "required": []}
@@ -111,7 +111,7 @@ class ToolRegistry:
 
         return schema
 
-    def get_tools_for_action(self) -> Dict[str, Any]:
+    def get_tools_for_action(self) -> dict[str, Any]:
         """Get tools formatted for Anthropic API"""
         return self.tool_definitions.copy()
 

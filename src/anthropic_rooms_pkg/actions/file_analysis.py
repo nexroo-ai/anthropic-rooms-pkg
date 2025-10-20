@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 import anthropic
 from loguru import logger
@@ -37,7 +37,7 @@ class ActionOutput(OutputBase):
     response: str = Field(..., description="Claude's analysis of the file")
     file_info: Optional[FileInfo] = Field(None, description="Information about uploaded file")
     model: str = Field(..., description="Model used")
-    usage: Dict[str, int] = Field(..., description="Token usage information")
+    usage: dict[str, int] = Field(..., description="Token usage information")
     stop_reason: Optional[str] = Field(None, description="Why Claude stopped generating")
 
 

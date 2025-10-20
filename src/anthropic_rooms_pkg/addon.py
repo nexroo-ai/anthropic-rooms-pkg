@@ -12,7 +12,7 @@ from .tools.base import ToolRegistry
 class AnthropicRoomsAddon:
     """
     Template Rooms Package Addon Class
-    
+
     This class provides access to all template rooms package functionality
     and can be instantiated by external programs using this package.
     """
@@ -94,7 +94,7 @@ class AnthropicRoomsAddon:
         Test function for template rooms package.
         Tests each module and reports available components.
         Test connections with credentials if required.
-        
+
         Returns:
             bool: True if test passes, False otherwise
         """
@@ -152,10 +152,10 @@ class AnthropicRoomsAddon:
     def loadAddonConfig(self, addon_config: dict):
         """
         Load addon configuration.
-        
+
         Args:
             addon_config (dict): Addon configuration dictionary
-        
+
         Returns:
             bool: True if configuration is loaded successfully, False otherwise
         """
@@ -172,10 +172,10 @@ class AnthropicRoomsAddon:
         """
         Load credentials and store them in the credentials registry.
         Takes individual secrets as keyword arguments for validation.
-        
+
         Args:
             **kwargs: Individual credential key-value pairs
-        
+
         Returns:
             bool: True if credentials are loaded successfully, False otherwise
         """

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Optional
 
 import anthropic
 from loguru import logger
@@ -17,7 +17,7 @@ class ChatMessage(BaseModel):
 
 class ActionInput(BaseModel):
     message: str = Field(..., description="User message to send to Claude")
-    messages: Optional[List[ChatMessage]] = Field(None, description="Full conversation history")
+    messages: Optional[list[ChatMessage]] = Field(None, description="Full conversation history")
     max_tokens: Optional[int] = Field(None, description="Max tokens (overrides config default)")
     temperature: Optional[float] = Field(None, description="Temperature (overrides config default)")
     system: Optional[str] = Field(None, description="System prompt")
@@ -26,13 +26,13 @@ class ActionInput(BaseModel):
 class ActionOutput(OutputBase):
     response: str = Field(..., description="Claude's response")
     model: str = Field(..., description="Model used")
-    usage: Dict[str, int] = Field(..., description="Token usage information")
+    usage: dict[str, int] = Field(..., description="Token usage information")
     stop_reason: Optional[str] = Field(None, description="Why Claude stopped generating")
 
 
 ### ADD TOOL REGISTERY FIRST BEFORE CHAT COMPLETION ##
 
-def _parse_tool_input(tool_input: Dict, tool_name: str, tools: Dict) -> Dict:
+def _parse_tool_input(tool_input: dict, tool_name: str, tools: dict) -> dict:
     import json
 
     if not tool_input or tool_name not in tools:
@@ -171,11 +171,11 @@ def _execute_tool_with_retries(tool_name, tool_input, tool_registry, tools, tool
 def chat_completion(
     config: CustomAddonConfig,
     message: str,
-    messages: Optional[List[ChatMessage]] = None,
+    messages: Optional[list[ChatMessage]] = None,
     max_tokens: Optional[int] = None,
     temperature: Optional[float] = None,
     system: Optional[str] = None,
-    tools: Optional[Dict] = None,
+    tools: Optional[dict] = None,
     tool_registry = None,
     observer_callback = None,
     addon_id: str = None
@@ -231,7 +231,7 @@ def chat_completion(
                 logger.debug(f"Tool '{tool_name}' description: {tool_def.get('description', 'No description')}")
                 logger.debug(f"Tool '{tool_name}' input schema: {tool_def.get('input_schema', 'No schema')}")
             formatted_tools = []
-            for action, tool_data in tools.items():
+            for _action, tool_data in tools.items():
                 formatted_tools.append(tool_data)
             api_params["tools"] = formatted_tools
 
@@ -308,7 +308,7 @@ def chat_completion(
 
             if tools:
                 formatted_tools = []
-                for action, tool_data in tools.items():
+                for _action, tool_data in tools.items():
                     formatted_tools.append(tool_data)
                 next_api_params["tools"] = formatted_tools
 

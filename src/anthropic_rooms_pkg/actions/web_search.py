@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Optional
 
 import anthropic
 from loguru import logger
@@ -25,10 +25,10 @@ class ActionInput(BaseModel):
 
 class ActionOutput(OutputBase):
     response: str = Field(..., description="Claude's response with web information")
-    citations: List[Citation] = Field(default_factory=list, description="Sources Claude used")
+    citations: list[Citation] = Field(default_factory=list, description="Sources Claude used")
     search_performed: bool = Field(..., description="Whether web search was performed")
     model: str = Field(..., description="Model used")
-    usage: Dict[str, int] = Field(..., description="Token usage information")
+    usage: dict[str, int] = Field(..., description="Token usage information")
     stop_reason: Optional[str] = Field(None, description="Why Claude stopped generating")
 
 

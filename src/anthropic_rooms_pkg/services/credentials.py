@@ -1,11 +1,11 @@
-from typing import Dict, Optional
+from typing import Optional
 
 from loguru import logger
 
 
 class CredentialsRegistry:
     _instance: Optional['CredentialsRegistry'] = None
-    _credentials: Dict[str, str] = {}
+    _credentials: dict[str, str] = {}
 
     def __new__(cls) -> 'CredentialsRegistry':
         if cls._instance is None:
@@ -16,7 +16,7 @@ class CredentialsRegistry:
         self._credentials[key] = value
         logger.debug(f"Stored credential: {key}")
 
-    def store_multiple(self, credentials: Dict[str, str]) -> None:
+    def store_multiple(self, credentials: dict[str, str]) -> None:
         for key, value in credentials.items():
             self.store(key, value)
 
