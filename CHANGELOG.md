@@ -2,6 +2,17 @@
 
 <!-- version list -->
 
+## v1.6.1 (2025-10-20)
+
+### Bug Fixes
+
+- **assets**: Add logo
+  ([`4ca8a0c`](https://github.com/synvex-ai/anthropic-rooms-pkg/commit/4ca8a0c96cf0f57da159b1eec83fb7b881ced3cd))
+
+- **lint**: -
+  ([`288d286`](https://github.com/synvex-ai/anthropic-rooms-pkg/commit/288d2865dca3c420d981d69eb734cd4c68b3e69d))
+
+
 ## v1.6.0 (2025-08-29)
 
 ### Bug Fixes
