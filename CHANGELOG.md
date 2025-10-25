@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.6.2 (2025-10-25)
+
+### Bug Fixes
+
+- Default no desc
+  ([`79811f0`](https://github.com/nexroo-ai/anthropic-rooms-pkg/commit/79811f0067704eb4a5d48ca31a9287389f708b1c))
+
+
 ## v1.6.1 (2025-10-20)
 
 ### Bug Fixes
